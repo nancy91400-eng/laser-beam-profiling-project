@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laser Beam Profiling &amp; Spatial Mode Selection | B.Tech Mini Project</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js for interactive cross-section and mode comparison graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- =====================================================================
+       TOP ACADEMIC HEADER & NAVIGATION
+       ===================================================================== -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand-block">
+        <div class="badge-row">
+          <span class="project-badge">B.Tech Mini Project</span>
+          <span class="badge-subtle">Educational Physics Simulation</span>
+        </div>
+        <h1>Laser Beam Profiling and Spatial Mode Selection</h1>
+        <p class="subtitle">
+          Interactive visualization of Hermite-Gaussian (TEM<sub>mn</sub>) laser beam intensity profiles, cross-sections, and spatial mode characteristics
+        </p>
+      </div>
+
+      <nav class="top-nav" aria-label="Section Navigation">
+        <a href="#simulator-section" class="nav-pill active">Simulator</a>
+        <a href="#comparison-section" class="nav-pill">Mode Comparison</a>
+        <a href="#report-section" class="nav-pill">Theory &amp; Report</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- Educational Notice Banner -->
+    <div class="info-banner" role="note">
+      <span class="info-icon" aria-hidden="true">i</span>
+      <p>
+        <strong>Simulation Note:</strong> This application is an educational mathematical simulation based on paraxial Hermite-Gaussian wave optics at the beam waist (<em>z</em> = 0), not a real-time hardware laser experiment.
+      </p>
+    </div>
+
+    <!-- =====================================================================
+         SECTION 1: INTERACTIVE SIMULATION DASHBOARD
+         ===================================================================== -->
+    <section id="simulator-section" class="dashboard-grid" aria-label="Laser Beam Simulation Dashboard">
+      <!-- LEFT COLUMN: CONTROLS & CALCULATED PARAMETERS -->
+      <aside class="controls-panel card">
+        <div class="card-header">
+          <h2>Simulation Controls</h2>
+          <span id="statusIndicator" class="status-pill">Ready</span>
+        </div>
+
+        <!-- Spatial Mode Selector -->
+        <div class="control-group">
+          <label class="group-label">Spatial Mode (TEM<sub>mn</sub>)</label>
+          <div class="mode-grid" role="radiogroup" aria-label="Select Spatial Mode">
+            <button type="button" class="mode-btn active" data-mode="TEM00" aria-pressed="true">
+              <span class="mode-title">TEM<sub>00</sub></span>
+              <span class="mode-sub">Gaussian</span>
+            </button>
+            <button type="button" class="mode-btn" data-mode="TEM01" aria-pressed="false">
+              <span class="mode-title">TEM<sub>01</sub></span>
+              <span class="mode-sub">2 Vertical Lobes</span>
+            </button>
+            <button type="button" class="mode-btn" data-mode="TEM10" aria-pressed="false">
+              <span class="mode-title">TEM<sub>10</sub></span>
+              <span class="mode-sub">2 Horizontal Lobes</span>
+            </button>
+            <button type="button" class="mode-btn" data-mode="TEM11" aria-pressed="false">
+              <span class="mode-title">TEM<sub>11</sub></span>
+              <span class="mode-sub">4 Quadrant Lobes</span>
+            </button>
+          </div>
+          <p id="modeQuickDesc" class="helper-text">
+            Fundamental Gaussian mode with a single central intensity peak and circular symmetry.
+          </p>
+        </div>
+
+        <!-- Beam Waist (w0) Control -->
+        <div class="control-group">
+          <div class="label-row">
+            <label for="beamWaistRange" class="group-label">Beam Waist (<em>w</em><sub>0</sub>)</label>
+            <div class="numeric-unit">
+              <input type="number" id="beamWaistInput" min="0.20" max="2.50" step="0.05" value="1.00" aria-label="Beam waist in millimeters" />
+              <span>mm</span>
+            </div>
+          </div>
+          <input type="range" id="beamWaistRange" min="0.20" max="2.50" step="0.05" value="1.00" />
+          <div class="range-limits">
+            <span>0.20 mm (Tight)</span>
+            <span>2.50 mm (Wide)</span>
+          </div>
+        </div>
+
+        <!-- Reference Laser Intensity (I0) Control -->
+        <div class="control-group">
+          <div class="label-row">
+            <label for="intensityRange" class="group-label">Laser Intensity (<em>I</em><sub>0</sub>)</label>
+            <div class="numeric-unit">
+              <input type="number" id="intensityInput" min="10" max="500" step="5" value="100" aria-label="Reference intensity in watts per square centimeter" />
+              <span>W/cm&sup2;</span>
+            </div>
+          </div>
+          <input type="range" id="intensityRange" min="10" max="500" step="5" value="100" />
+          <div class="range-limits">
+            <span>10 W/cm&sup2;</span>
+            <span>500 W/cm&sup2;</span>
+          </div>
+        </div>
+
+        <!-- Wavelength Selection -->
+        <div class="control-group">
+          <label for="wavelengthSelect" class="group-label">Laser Wavelength (&lambda;)</label>
+          <select id="wavelengthSelect" class="select-input">
+            <option value="632.8" selected>632.8 nm &mdash; He-Ne Laser (Red)</option>
+            <option value="532.0">532.0 nm &mdash; Frequency-Doubled Nd:YAG (Green)</option>
+            <option value="1064.0">1064.0 nm &mdash; Nd:YAG Fundamental (Near-IR)</option>
+            <option value="405.0">405.0 nm &mdash; Diode Laser (Violet)</option>
+          </select>
+        </div>
+
+        <!-- Cross-Section & Visualization Options -->
+        <div class="control-group two-col-options">
+          <div>
+            <label for="sliceModeSelect" class="group-label">Cross-Section Slice</label>
+            <select id="sliceModeSelect" class="select-input">
+              <option value="peak" selected>Through Peak Lobe</option>
+              <option value="center">Center Axis (x=0, y=0)</option>
+            </select>
+          </div>
+          <div>
+            <label for="scaleModeSelect" class="group-label">Graph Intensity Scale</label>
+            <select id="scaleModeSelect" class="select-input">
+              <option value="absolute" selected>Absolute (W/cm&sup2;)</option>
+              <option value="normalized">Normalized (I / I_peak)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group two-col-options">
+          <div>
+            <label for="colormapSelect" class="group-label">Heatmap Palette</label>
+            <select id="colormapSelect" class="select-input">
+              <option value="inferno" selected>Inferno (Thermal)</option>
+              <option value="laser">Laser Crimson</option>
+              <option value="viridis">Viridis (Scientific)</option>
+            </select>
+          </div>
+          <div class="checkbox-wrap">
+            <label class="checkbox-label">
+              <input type="checkbox" id="showGaussianRef" checked />
+              <span>Overlay TEM<sub>00</sub> Ref.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button type="button" id="calculateBtn" class="btn btn-primary">Calculate</button>
+          <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
+          <button type="button" id="compareBtn" class="btn btn-accent">Compare Modes</button>
+        </div>
+
+        <!-- Calculated Beam Parameters Readout -->
+        <div class="params-box">
+          <h3>Calculated Beam Parameters</h3>
+          <div class="params-grid">
+            <div class="param-item">
+              <span class="param-label">Peak Intensity (<em>I</em><sub>peak</sub>)</span>
+              <span id="paramPeakIntensity" class="param-value">100.00 W/cm&sup2;</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Normalized Peak (<em>I</em><sub>peak</sub>/<em>I</em><sub>0</sub>)</span>
+              <span id="paramNormPeak" class="param-value">1.000</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Total Beam Power (<em>P</em>)</span>
+              <span id="paramPower" class="param-value">1.571 W</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">1/<em>e</em>&sup2; Diameter (2<em>w</em><sub>0</sub>)</span>
+              <span id="paramDiameter" class="param-value">2.00 mm</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">TEM<sub>00</sub> FWHM</span>
+              <span id="paramFwhm" class="param-value">1.177 mm</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Rayleigh Range (<em>z</em><sub>R</sub>)</span>
+              <span id="paramRayleigh" class="param-value">4.965 m</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Divergence (&theta;)</span>
+              <span id="paramDivergence" class="param-value">0.201 mrad</span>
+            </div>
+            <div class="param-item">
+              <span class="param-label">Beam Quality (<em>M</em><sub>x</sub>&sup2;, <em>M</em><sub>y</sub>&sup2;)</span>
+              <span id="paramM2" class="param-value">1, 1</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT COLUMN: 2D HEATMAP, 3D SURFACE, HORIZONTAL & VERTICAL CHARTS -->
+      <div class="visuals-panel">
+        <!-- Row 1: 2D Heatmap & 3D Surface -->
+        <div class="visuals-row">
+          <!-- 2D Intensity Heatmap -->
+          <article class="card viz-card">
+            <div class="card-header">
+              <div>
+                <h3>2D Laser Beam Intensity Heatmap</h3>
+                <p class="card-subtitle">Transverse profile <em>I</em>(<em>x</em>, <em>y</em>) at waist <em>z</em> = 0 (dashed circle: <em>r</em> = <em>w</em><sub>0</sub>)</p>
+              </div>
+              <span id="heatmapModeTag" class="mode-tag">TEM<sub>00</sub></span>
+            </div>
+            <div class="heatmap-wrapper">
+              <canvas id="heatmapCanvas" width="380" height="380" aria-label="2D laser beam intensity heatmap"></canvas>
+              <div class="colorbar-container" aria-hidden="true">
+                <span id="colorbarMax" class="cb-label">100.0</span>
+                <canvas id="colorbarCanvas" width="18" height="320"></canvas>
+                <span class="cb-label">0.0</span>
+              </div>
+            </div>
+            <div id="hoverReadout" class="hover-readout">
+              Move cursor over heatmap to inspect (<em>x</em>, <em>y</em>) and local intensity.
+            </div>
+          </article>
+
+          <!-- 3D-Style Surface Visualization -->
+          <article class="card viz-card">
+            <div class="card-header">
+              <div>
+                <h3>3D-Style Intensity Surface</h3>
+                <p class="card-subtitle">Interactive perspective surface &mdash; drag to rotate view</p>
+              </div>
+              <button type="button" id="resetViewBtn" class="btn-small">Reset View</button>
+            </div>
+            <div class="surface-wrapper">
+              <canvas id="surface3dCanvas" width="420" height="380" aria-label="3D intensity surface visualization"></canvas>
+            </div>
+            <div class="hover-readout">
+              Viewing angles: <span id="angleReadout">Azimuth 38&deg;, Elevation 30&deg;</span>
+            </div>
+          </article>
+        </div>
+
+        <!-- Row 2: Horizontal & Vertical Cross-Section Graphs -->
+        <div class="visuals-row">
+          <article class="card chart-card">
+            <div class="card-header">
+              <div>
+                <h3>Horizontal Intensity Cross-Section <em>I</em>(<em>x</em>)</h3>
+                <p id="horizSubtitle" class="card-subtitle">Slice along <em>y</em> = 0.00 mm</p>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="horizontalChart"></canvas>
+            </div>
+          </article>
+
+          <article class="card chart-card">
+            <div class="card-header">
+              <div>
+                <h3>Vertical Intensity Cross-Section <em>I</em>(<em>y</em>)</h3>
+                <p id="vertSubtitle" class="card-subtitle">Slice along <em>x</em> = 0.00 mm</p>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="verticalChart"></canvas>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 2: SPATIAL MODE COMPARISON PANEL
+         ===================================================================== -->
+    <section id="comparison-section" class="card comparison-section" aria-label="Spatial Mode Comparison">
+      <div class="card-header comparison-header">
+        <div>
+          <h2>Spatial Mode Comparison (TEM<sub>00</sub>, TEM<sub>01</sub>, TEM<sub>10</sub>, TEM<sub>11</sub>)</h2>
+          <p class="card-subtitle">
+            Side-by-side intensity distributions and quantitative characteristics at identical total beam power <em>P</em> and waist <em>w</em><sub>0</sub>
+          </p>
+        </div>
+        <div class="comparison-controls">
+          <label for="compareAxisSelect" class="group-label-inline">Comparison Profile:</label>
+          <select id="compareAxisSelect" class="select-input compact">
+            <option value="peakSlice" selected>Through Each Mode's Peak Lobe</option>
+            <option value="horizontal">Center Horizontal Axis (y = 0)</option>
+            <option value="diagonal">Diagonal Axis (y = x)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 4 Mini Heatmaps -->
+      <div class="mini-modes-grid">
+        <div class="mini-mode-card" data-compare-mode="TEM00">
+          <div class="mini-card-top">
+            <strong>TEM<sub>00</sub></strong>
+            <span id="miniPeakTEM00" class="mini-peak">100.0 W/cm&sup2;</span>
+          </div>
+          <canvas id="miniCanvasTEM00" width="180" height="180" aria-label="TEM00 intensity preview"></canvas>
+          <p class="mini-caption">1 central lobe &bull; No nodal lines</p>
+        </div>
+
+        <div class="mini-mode-card" data-compare-mode="TEM01">
+          <div class="mini-card-top">
+            <strong>TEM<sub>01</sub></strong>
+            <span id="miniPeakTEM01" class="mini-peak">73.6 W/cm&sup2;</span>
+          </div>
+          <canvas id="miniCanvasTEM01" width="180" height="180" aria-label="TEM01 intensity preview"></canvas>
+          <p class="mini-caption">2 vertical lobes &bull; Nodal line at <em>y</em> = 0</p>
+        </div>
+
+        <div class="mini-mode-card" data-compare-mode="TEM10">
+          <div class="mini-card-top">
+            <strong>TEM<sub>10</sub></strong>
+            <span id="miniPeakTEM10" class="mini-peak">73.6 W/cm&sup2;</span>
+          </div>
+          <canvas id="miniCanvasTEM10" width="180" height="180" aria-label="TEM10 intensity preview"></canvas>
+          <p class="mini-caption">2 horizontal lobes &bull; Nodal line at <em>x</em> = 0</p>
+        </div>
+
+        <div class="mini-mode-card" data-compare-mode="TEM11">
+          <div class="mini-card-top">
+            <strong>TEM<sub>11</sub></strong>
+            <span id="miniPeakTEM11" class="mini-peak">54.1 W/cm&sup2;</span>
+          </div>
+          <canvas id="miniCanvasTEM11" width="180" height="180" aria-label="TEM11 intensity preview"></canvas>
+          <p class="mini-caption">4 quadrant lobes &bull; Nodal lines at <em>x</em>=0, <em>y</em>=0</p>
+        </div>
+      </div>
+
+      <!-- Comparison Overlay Graph & Summary Table -->
+      <div class="comparison-body">
+        <div class="comparison-chart-box">
+          <h3>Overlay Intensity Profile Comparison</h3>
+          <div class="chart-container tall">
+            <canvas id="comparisonChart"></canvas>
+          </div>
+        </div>
+
+        <div class="comparison-table-box">
+          <h3>Quantitative Mode Characteristics</h3>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Indices (<em>m</em>, <em>n</em>)</th>
+                  <th>Lobes</th>
+                  <th>Nodal Lines</th>
+                  <th>Peak Ratio (<em>I</em><sub>peak</sub>/<em>I</em><sub>0</sub>)</th>
+                  <th><em>I</em><sub>peak</sub> (W/cm&sup2;)</th>
+                  <th><em>M</em><sub>x</sub>&sup2;, <em>M</em><sub>y</sub>&sup2;</th>
+                </tr>
+              </thead>
+              <tbody id="comparisonTableBody">
+                <!-- Populated dynamically by script.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION 3: EDUCATIONAL REPORT & DOCUMENTATION
+         ===================================================================== -->
+    <section id="report-section" class="card report-section" aria-label="Educational Content and Project Documentation">
+      <div class="card-header">
+        <div>
+          <h2>Academic Documentation &amp; Physics Reference</h2>
+          <p class="card-subtitle">Complete theoretical background, equations, and analysis for B.Tech mini project study</p>
+        </div>
+      </div>
+
+      <div class="report-grid">
+        <!-- 1. Introduction -->
+        <article class="report-card">
+          <h3>1. Introduction</h3>
+          <p>
+            A laser resonator supports discrete transverse electromagnetic field distributions known as <strong>spatial modes</strong> or <strong>TEM<sub>mn</sub></strong> (Transverse Electromagnetic) modes. Unlike ideal plane waves, real laser beams exhibit finite transverse spatial extent and specific intensity patterns governed by resonator geometry, aperture diffraction, and gain medium symmetry.
+          </p>
+          <p>
+            <strong>Laser beam profiling</strong> is the measurement and analysis of a beam's spatial irradiance distribution <em>I</em>(<em>x</em>, <em>y</em>) across a plane perpendicular to propagation. Understanding spatial profiles is essential because beam focusability, power density, and optical coupling efficiency depend strongly on the active transverse mode.
+          </p>
+        </article>
+
+        <!-- 2. Project Objectives -->
+        <article class="report-card">
+          <h3>2. Project Objectives</h3>
+          <ul>
+            <li>Simulate and visualize 2D and 3D transverse intensity profiles of laser beams using pure HTML5 Canvas and JavaScript.</li>
+            <li>Compare the fundamental Gaussian mode (<strong>TEM<sub>00</sub></strong>) with higher-order Hermite-Gaussian modes (<strong>TEM<sub>01</sub></strong>, <strong>TEM<sub>10</sub></strong>, <strong>TEM<sub>11</sub></strong>).</li>
+            <li>Demonstrate how beam waist (<em>w</em><sub>0</sub>) and reference intensity (<em>I</em><sub>0</sub>) control spot size, peak irradiance, Rayleigh range, and beam divergence.</li>
+            <li>Provide accurate horizontal and vertical intensity cross-sections alongside normalized and absolute metrics.</li>
+          </ul>
+        </article>
+
+        <!-- 3. Working Principle -->
+        <article class="report-card">
+          <h3>3. Working Principle</h3>
+          <p>
+            Inside a stable rectangular or spherical-mirror laser cavity, light bounces back and forth between mirrors. Only electromagnetic field patterns that reproduce themselves in phase and amplitude after one round trip can resonate efficiently. Under the <strong>paraxial Helmholtz equation</strong>, these self-consistent cavity solutions form the orthogonal family of <strong>Hermite-Gaussian modes</strong>.
+          </p>
+          <p>
+            The indices <em>m</em> and <em>n</em> count the number of zero-intensity <strong>nodal lines</strong> along the horizontal (<em>x</em>) and vertical (<em>y</em>) axes respectively. Higher indices introduce phase reversals (&pi; radians) between adjacent lobes, producing dark nodal planes where electric field amplitude cancels to zero.
+          </p>
+        </article>
+
+        <!-- 4. Mathematical Model -->
+        <article class="report-card full-span">
+          <h3>4. Mathematical Model (Simple Explanation)</h3>
+          <p>
+            At the beam waist plane (<em>z</em> = 0), all modes share a Gaussian envelope multiplied by Hermite polynomials <em>H<sub>m</sub></em> and <em>H<sub>n</sub></em>. To ensure fair comparison at constant total beam power <em>P</em> = &frac12;&pi;<em>w</em><sub>0</sub>&sup2;<em>I</em><sub>0</sub>, the intensity equation is:
+          </p>
+
+          <div class="equation-box">
+            <code>I<sub>mn</sub>(x, y) = [ I<sub>0</sub> / (2<sup>m+n</sup> &middot; m! &middot; n!) ] &middot; [ H<sub>m</sub>(&radic;2 &middot; x / w<sub>0</sub>) &middot; H<sub>n</sub>(&radic;2 &middot; y / w<sub>0</sub>) ]&sup2; &middot; exp( &minus;2(x&sup2; + y&sup2;) / w<sub>0</sub>&sup2; )</code>
+          </div>
+
+          <div class="math-breakdown">
+            <div>
+              <h4>Plain-Language Variable Guide</h4>
+              <ul>
+                <li><strong><em>w</em><sub>0</sub> (Beam Waist):</strong> The radius where the fundamental TEM<sub>00</sub> intensity drops to 1/<em>e</em>&sup2; (&approx; 13.53%) of its peak. Larger <em>w</em><sub>0</sub> spreads energy over a wider spot.</li>
+                <li><strong><em>I</em><sub>0</sub> (Reference Intensity):</strong> Peak intensity of the fundamental TEM<sub>00</sub> beam at the center (<em>x</em> = 0, <em>y</em> = 0).</li>
+                <li><strong>exp(&minus;2(<em>x</em>&sup2; + <em>y</em>&sup2;)/<em>w</em><sub>0</sub>&sup2;):</strong> The bell-shaped Gaussian decay factor that keeps energy confined near the beam axis.</li>
+                <li><strong><em>H<sub>m</sub></em>(<em>u</em>) (Hermite Polynomials):</strong> Shape functions creating lobes and dark nodal lines: <em>H</em><sub>0</sub>(<em>u</em>) = 1 (no nodes) and <em>H</em><sub>1</sub>(<em>u</em>) = 2<em>u</em> (one node at <em>u</em> = 0).</li>
+              </ul>
+            </div>
+            <div>
+              <h4>Key Beam Propagation Equations</h4>
+              <ul>
+                <li><strong>Rayleigh Range:</strong> <em>z</em><sub>R</sub> = &pi;<em>w</em><sub>0</sub>&sup2; / &lambda; &mdash; distance over which the beam cross-sectional area doubles.</li>
+                <li><strong>Far-Field Half-Angle Divergence:</strong> &theta; = &lambda; / (&pi;<em>w</em><sub>0</sub>) &mdash; narrower waists diverge faster due to diffraction.</li>
+                <li><strong>Beam Quality Factor:</strong> <em>M</em><sub>x</sub>&sup2; = 2<em>m</em> + 1, <em>M</em><sub>y</sub>&sup2; = 2<em>n</em> + 1 &mdash; measures how close a mode is to the diffraction limit (<em>M</em>&sup2; = 1 for TEM<sub>00</sub>).</li>
+                <li><strong>TEM<sub>00</sub> FWHM:</strong> Full Width at Half Maximum = <em>w</em><sub>0</sub>&radic;(2 ln 2) &approx; 1.1774 <em>w</em><sub>0</sub>.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <!-- 5. Types of Spatial Modes -->
+        <article class="report-card full-span">
+          <h3>5. Types of Spatial Modes</h3>
+          <div class="modes-info-grid">
+            <div class="mode-info-tile">
+              <h4>TEM<sub>00</sub> (Fundamental Gaussian)</h4>
+              <p>Single smooth central peak (<em>m</em> = 0, <em>n</em> = 0) with <em>M</em>&sup2; = 1. Produces the smallest possible focused spot size and lowest divergence for a given beam waist.</p>
+            </div>
+            <div class="mode-info-tile">
+              <h4>TEM<sub>01</sub> (Vertical Hermite-Gaussian)</h4>
+              <p>Two symmetric lobes stacked vertically along <em>y</em> (<em>m</em> = 0, <em>n</em> = 1) separated by a horizontal dark nodal line at <em>y</em> = 0. Peak intensity drops to 2<em>e</em><sup>&minus;1</sup><em>I</em><sub>0</sub> (&approx; 73.6% of <em>I</em><sub>0</sub>).</p>
+            </div>
+            <div class="mode-info-tile">
+              <h4>TEM<sub>10</sub> (Horizontal Hermite-Gaussian)</h4>
+              <p>Two symmetric lobes arranged horizontally along <em>x</em> (<em>m</em> = 1, <em>n</em> = 0) separated by a vertical nodal line at <em>x</em> = 0. Peak occurs at <em>x</em> = &plusmn;<em>w</em><sub>0</sub>/&radic;2.</p>
+            </div>
+            <div class="mode-info-tile">
+              <h4>TEM<sub>11</sub> (Four-Lobe Mode)</h4>
+              <p>Four bright quadrant peaks (<em>m</em> = 1, <em>n</em> = 1) divided by perpendicular nodal lines at <em>x</em> = 0 and <em>y</em> = 0. Peak intensity is 4<em>e</em><sup>&minus;2</sup><em>I</em><sub>0</sub> (&approx; 54.1% of <em>I</em><sub>0</sub>) with <em>M</em><sub>x</sub>&sup2; = <em>M</em><sub>y</sub>&sup2; = 3.</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- 6. Applications -->
+        <article class="report-card">
+          <h3>6. Applications</h3>
+          <ul>
+            <li><strong>Optical Fiber Coupling &amp; Telecom:</strong> Single-mode fibers require TEM<sub>00</sub> profiles for maximum coupling efficiency.</li>
+            <li><strong>Precision Laser Micromachining:</strong> TEM<sub>00</sub> achieves minimal kerf width and high irradiance in cutting, drilling, and lithography.</li>
+            <li><strong>Optical Tweezers &amp; Atom Trapping:</strong> Higher-order modes (e.g., TEM<sub>01</sub>/TEM<sub>10</sub> or Laguerre-Gaussian superpositions) create multi-site or structured optical potentials.</li>
+            <li><strong>Laser Cavity Alignment &amp; Diagnostics:</strong> Observing TEM<sub>10</sub> or TEM<sub>11</sub> patterns in a beam profiler helps engineers diagnose mirror tilt or aperture misalignment.</li>
+          </ul>
+        </article>
+
+        <!-- 7. Results and Discussion -->
+        <article class="report-card">
+          <h3>7. Results and Discussion</h3>
+          <p>
+            From the simulation, increasing the mode order (<em>m</em> + <em>n</em>) redistributes the same total optical power <em>P</em> across multiple off-axis lobes. Consequently, peak irradiance drops from <strong>100%</strong> of <em>I</em><sub>0</sub> (TEM<sub>00</sub>) to <strong>73.58%</strong> (TEM<sub>01</sub>/TEM<sub>10</sub>) and <strong>54.13%</strong> (TEM<sub>11</sub>), while the effective beam width and <em>M</em>&sup2; factor increase.
+          </p>
+          <div id="liveAnalysisBox" class="live-analysis-box">
+            <!-- Dynamically updated with current simulation values -->
+          </div>
+        </article>
+
+        <!-- 8. Conclusion -->
+        <article class="report-card">
+          <h3>8. Conclusion</h3>
+          <p>
+            This simulation demonstrates the direct link between transverse electromagnetic mode indices, Hermite-Gaussian intensity distributions, and physical beam quality metrics. While TEM<sub>00</sub> delivers unmatched peak power density and diffraction-limited focusing, higher-order spatial modes provide distinct multi-lobe geometries suited for specialized optical trapping, sensing, and resonator diagnostics.
+          </p>
+        </article>
+
+        <!-- 9. References -->
+        <article class="report-card">
+          <h3>9. References</h3>
+          <ol class="ref-list">
+            <li>A. E. Siegman, <em>Lasers</em>, University Science Books, Mill Valley, CA, 1986.</li>
+            <li>B. E. A. Saleh and M. C. Teich, <em>Fundamentals of Photonics</em>, 3rd ed., Wiley, 2019.</li>
+            <li>A. Yariv and P. Yeh, <em>Photonics: Optical Electronics in Modern Communications</em>, 6th ed., Oxford University Press, 2007.</li>
+            <li>ISO 11146-1:2021, <em>Lasers and laser-related equipment &mdash; Test methods for laser beam widths, divergence angles and beam propagation ratios</em>.</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>Laser Beam Profiling and Spatial Mode Selection &bull; Educational Physics Simulation</p>
+      <p>Built with HTML5, CSS3, JavaScript, HTML Canvas &amp; Chart.js</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
